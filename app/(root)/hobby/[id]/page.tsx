@@ -372,8 +372,8 @@ export default function HobbyDetailPage({ params }: { params: { id: string } }) 
                 </div>
                 
                 <div className="mt-6 space-y-3">
-                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-                    Start This Hobby
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+                    Join the Community
                   </Button>
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
