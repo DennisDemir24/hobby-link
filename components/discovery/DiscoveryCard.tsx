@@ -7,6 +7,7 @@ import { ArrowRight, TrendingUp, Flame, Image as ImageIcon, Users, Sparkles } fr
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export interface TrendingHobby {
   id: number
@@ -26,6 +27,13 @@ interface DiscoveryCardProps {
 
 const DiscoveryCard = ({ hobby, index }: DiscoveryCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const router = useRouter();
+  
+  const handleExploreClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Stop event propagation to prevent parent Link from triggering
+    e.preventDefault(); // Prevent default behavior
+    router.push(`/hobby/${hobby.id}`);
+  };
 
   return (
     <motion.div
@@ -96,7 +104,11 @@ const DiscoveryCard = ({ hobby, index }: DiscoveryCardProps) => {
           </div>
           
           <div className="h-[1px] w-full bg-gray-100 mb-4"></div>
-          <Button variant="ghost" className="text-indigo-600 p-0 h-auto font-medium hover:bg-transparent hover:text-indigo-700 group/btn">
+          <Button 
+            variant="ghost" 
+            className="text-indigo-600 p-0 h-auto font-medium hover:bg-transparent hover:text-indigo-700 group/btn"
+            onClick={handleExploreClick}
+          >
             Explore this hobby
             <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
           </Button>

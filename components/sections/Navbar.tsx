@@ -27,10 +27,10 @@ export const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', href: '/' },
-    { name: 'Features', href: '#features' },
+    { name: 'Discover', href: '/discover' },
     { name: 'Community', href: '#community' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'Blog', href: '/blog' },
+    /* { name: 'Pricing', href: '#pricing' }, */
+    /* { name: 'Blog', href: '/blog' }, */
   ]
 
   return (
@@ -67,10 +67,10 @@ export const Navbar = () => {
 
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" className="text-gray-700">
+            <Button variant="ghost" className="text-gray-700 hover:text-indigo-600 border border-indigo-100 cursor-pointer">
               Log in
             </Button>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
               Sign up
             </Button>
           </div>
