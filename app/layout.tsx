@@ -4,6 +4,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Navbar } from "@/components/sections/Navbar";
 import FooterSection from "@/components/sections/FooterSection";
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,6 +33,7 @@ export default function RootLayout({
 
         </main>
         <FooterSection />
+        <Toaster />
       </body>
     </html>
     </ClerkProvider>
