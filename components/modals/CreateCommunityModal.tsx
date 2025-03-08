@@ -238,139 +238,153 @@ export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunity
       </div>
       
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
           <div 
             ref={modalRef}
-            className="bg-white dark:bg-gray-900 w-full max-w-[500px] rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mx-4 text-white"
+            className="bg-white rounded-lg shadow-xl w-full max-w-[500px] max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2 dark:text-white">
-                <Users className="h-5 w-5 text-primary" />
-                Create a Community
-              </h2>
-              <button 
-                onClick={() => setOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              Create a new community to connect with people who share your interests.
-            </p>
-            
-            <Form {...form}>
-              <form 
-                onSubmit={form.handleSubmit(onSubmit)} 
-                className="space-y-4"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="dark:text-gray-200">Community Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="Enter community name" 
-                          {...field} 
-                          autoComplete="off"
-                          className="bg-white dark:bg-gray-800"
-                        />
-                      </FormControl>
-                      <FormDescription className="dark:text-gray-400">
-                        This is the name that will be displayed publicly.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="dark:text-gray-200">Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe what this community is about" 
-                          className="min-h-[100px] resize-none bg-white dark:bg-gray-800"
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="hobbyId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="dark:text-gray-200">Hobby</FormLabel>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                          disabled={isLoadingHobbies}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-white dark:bg-gray-800">
-                              <SelectValue placeholder="Select a hobby" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent 
-                            position="popper" 
-                            sideOffset={5}
-                            className="max-h-[200px] overflow-y-auto z-[10000]"
-                          >
-                            {isLoadingHobbies ? (
-                              <SelectItem value="loading" disabled>Loading hobbies...</SelectItem>
-                            ) : (
-                              hobbies.map((hobby) => (
-                                <SelectItem key={hobby.id} value={hobby.id}>
-                                  {hobby.name}
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <FormDescription className="dark:text-gray-400">
-                        Select the hobby this community is related to.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-2 mt-6">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setOpen(false)}
-                    disabled={isLoading}
-                    className="bg-white dark:bg-gray-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="mr-2">Creating...</span>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      </>
-                    ) : (
-                      "Create Community"
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-indigo-600" />
+                  Create a Community
+                </h2>
+                <button 
+                  onClick={() => setOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <p className="text-sm text-gray-500 mb-6">
+                Create a new community to connect with people who share your interests.
+              </p>
+              
+              <Form {...form}>
+                <form 
+                  onSubmit={form.handleSubmit(onSubmit)} 
+                  className="space-y-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Community Name</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter community name" 
+                            {...field} 
+                            autoComplete="off"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-gray-500">
+                          This is the name that will be displayed publicly.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Describe what this community is about" 
+                            className="min-h-[100px] resize-none"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hobbyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hobby</FormLabel>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                            disabled={isLoadingHobbies}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full border border-input bg-background text-sm focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all">
+                                <SelectValue placeholder="Select a hobby" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent 
+                              position="popper" 
+                              sideOffset={5}
+                              align="center"
+                              className="bg-white border border-gray-200 shadow-lg rounded-md z-[10000]"
+                              style={{ maxHeight: '250px', overflowY: 'auto' }}
+                            >
+                              {isLoadingHobbies ? (
+                                <div className="p-2 text-center text-gray-500">
+                                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2 align-middle"></span>
+                                  Loading hobbies...
+                                </div>
+                              ) : hobbies.length === 0 ? (
+                                <div className="p-2 text-center text-gray-500">
+                                  No hobbies found
+                                </div>
+                              ) : (
+                                hobbies.map((hobby) => (
+                                  <SelectItem 
+                                    key={hobby.id} 
+                                    value={hobby.id}
+                                    className="cursor-pointer hover:bg-gray-100"
+                                  >
+                                    {hobby.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <FormDescription className="text-gray-500">
+                          Select the hobby this community is related to.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2 mt-6">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setOpen(false)}
+                      disabled={isLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="mr-2">Creating...</span>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        </>
+                      ) : (
+                        "Create Community"
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
           </div>
         </div>
       )}
