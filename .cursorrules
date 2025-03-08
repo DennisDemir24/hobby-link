@@ -7,6 +7,8 @@
 - Let's keep things as simple as possible, and make every implementation scaleable if possible. 
 - Fewer lines the better. We want to make sure we are backwards compatible as well, whenever that is possible. 
 - When my code gets reviewed, I want to make minimal changes to it.
+- I want to make sure that the code is as clean as possible, and that it is easy to read and understand.
+- ALWAYS show how you would implement the new feature or task and ask for approval before proceeding to the implementation.
 
 # Product Engineer
 - You are a senior and 10x product engineer.

@@ -1,116 +1,62 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import DiscoveryCard from '@/components/discovery/DiscoveryCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search, X } from 'lucide-react'
+import { Search, X, Plus, ArrowRight, Flame, TrendingUp, Users, Sparkles } from 'lucide-react'
+import { getHobbies } from '@/lib/actions/hobby.action'
+import { CreateHobbyModal } from '@/components/modals/CreateHobbyModal'
+import { Badge } from '@/components/ui/badge'
 
 // Define types for our data
-interface Resource {
-  title: string;
-  url: string;
-}
-
 interface Hobby {
-  id: number;
-  title: string;
-  description: string;
-  image: string;
-  category: string;
-  trendingFactor: string;
-  trendingPercentage: string;
+  id: string;
+  name: string;
+  description: string | null;
   tags: string[];
-  longDescription?: string;
-  difficulty?: string;
-  timeCommitment?: string;
-  costRange?: string;
-  communities?: number;
-  resources?: Resource[];
-  relatedHobbies?: number[];
+  emoji: string | null;
+  difficulty: string | null;
+  timeCommitment: string | null;
+  costRange: string | null;
+  location: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
-
-// Mock data for trending hobbies
-const trendingHobbies: Hobby[] = [
-  {
-    id: 1,
-    title: 'Urban Gardening',
-    description: 'Transform your urban space into a green oasis with container gardening, vertical gardens, and more.',
-    image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Outdoors',
-    trendingFactor: 'High demand',
-    trendingPercentage: '+32%',
-    tags: ['sustainable', 'plants', 'urban']
-  },
-  {
-    id: 2,
-    title: 'Drone Photography',
-    description: 'Capture stunning aerial perspectives with the latest drone technology and photography techniques.',
-    image: 'https://images.unsplash.com/photo-1506947411487-a56738267384?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Technology',
-    trendingFactor: 'Growing fast',
-    trendingPercentage: '+45%',
-    tags: ['photography', 'tech', 'aerial']
-  },
-  {
-    id: 3,
-    title: 'Pottery',
-    description: 'Learn the art of creating beautiful ceramic pieces with your hands and a pottery wheel.',
-    image: 'https://images.unsplash.com/photo-1565122256212-41788ba908b2?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Crafts',
-    trendingFactor: 'Steady growth',
-    trendingPercentage: '+18%',
-    tags: ['handmade', 'ceramics', 'art']
-  },
-  {
-    id: 4,
-    title: 'Bouldering',
-    description: 'Challenge yourself with this form of rock climbing performed without the use of ropes or harnesses.',
-    image: 'https://images.unsplash.com/photo-1522163182402-834f871fd851?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Sports',
-    trendingFactor: 'Very popular',
-    trendingPercentage: '+62%',
-    tags: ['climbing', 'fitness', 'outdoor']
-  },
-  {
-    id: 5,
-    title: 'Fermentation',
-    description: 'Discover the science and art of fermentation to create your own kombucha, kimchi, and more.',
-    image: 'https://images.unsplash.com/photo-1590592029783-bbc950d20e63?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Culinary',
-    trendingFactor: 'Rising trend',
-    trendingPercentage: '+27%',
-    tags: ['food', 'health', 'diy']
-  },
-  {
-    id: 6,
-    title: 'Digital Illustration',
-    description: 'Create stunning digital artwork using the latest software and techniques.',
-    image: 'https://images.unsplash.com/photo-1572044162444-ad60f128bdea?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    category: 'Art',
-    trendingFactor: 'High demand',
-    trendingPercentage: '+38%',
-    tags: ['digital', 'art', 'design']
-  }
-];
 
 const DiscoverPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [hobbies, setHobbies] = useState<Hobby[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Get all unique categories
+  useEffect(() => {
+    async function fetchHobbies() {
+      try {
+        const fetchedHobbies = await getHobbies();
+        setHobbies(fetchedHobbies);
+      } catch (error) {
+        console.error("Error fetching hobbies:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchHobbies();
+  }, []);
+  
+  // Get all unique categories (from tags for now)
   const allCategories = Array.from(
-    new Set(trendingHobbies.map(hobby => hobby.category))
+    new Set(hobbies.flatMap(hobby => hobby.tags))
   );
   
-  const filteredHobbies = trendingHobbies.filter(hobby => 
+  const filteredHobbies = hobbies.filter(hobby => 
     (searchQuery === '' || 
-      hobby.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      hobby.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      hobby.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (hobby.description && hobby.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
       hobby.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     ) &&
-    (selectedCategory === null || hobby.category === selectedCategory)
+    (selectedCategory === null || hobby.tags.includes(selectedCategory))
   );
 
   const clearFilters = () => {
@@ -121,9 +67,17 @@ const DiscoverPage = () => {
   return (
     <div>
       {/* Header section */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Discover New Hobbies</h1>
-        <p className="text-gray-600">Explore trending hobbies and find your next passion</p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Discover New Hobbies</h1>
+          <p className="text-gray-600">Explore trending hobbies and find your next passion</p>
+        </div>
+        <CreateHobbyModal>
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Hobby
+          </Button>
+        </CreateHobbyModal>
       </div>
       
       {/* Search bar */}
@@ -197,26 +151,107 @@ const DiscoverPage = () => {
         )}
       </div>
       
-      {/* Hobby cards grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredHobbies.map((hobby, index) => (
-          <Link href={`/hobby/${hobby.id}`} key={hobby.id} className="block h-full">
-            <DiscoveryCard hobby={hobby} index={index} />
-          </Link>
-        ))}
-      </div>
-      
-      {filteredHobbies.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
-          <p className="text-gray-500 mb-2">No hobbies found matching your search.</p>
-          <Button 
-            variant="outline" 
-            className="mt-4 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-            onClick={clearFilters}
-          >
-            Clear filters
-          </Button>
+      {loading ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">Loading hobbies...</p>
         </div>
+      ) : (
+        <>
+          {/* Hobby cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredHobbies.map((hobby) => (
+              <div key={hobby.id} className="block h-full">
+                <div className="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow h-full overflow-hidden">
+                  <div className="relative aspect-[16/9] bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center">
+                    <div className="text-7xl">
+                      {hobby.emoji || (
+                        hobby.name.toLowerCase().includes("paint") ? "🎨" : 
+                        hobby.name.toLowerCase().includes("garden") ? "🌱" : 
+                        hobby.name.toLowerCase().includes("cook") ? "🍳" : "🔍"
+                      )}
+                    </div>
+                    {/* Category badge */}
+                    <div className="absolute top-3 left-3">
+                      <Badge variant="secondary" className="bg-white/90 text-indigo-600 font-medium shadow-sm border border-indigo-100 backdrop-blur-sm">
+                        {hobby.tags[0] ? hobby.tags[0].charAt(0).toUpperCase() + hobby.tags[0].slice(1) : "Hobby"}
+                      </Badge>
+                    </div>
+                    {/* Trending percentage badge */}
+                    <div className="absolute top-3 right-3">
+                      <Badge variant="secondary" className="bg-white/90 text-indigo-600 font-medium shadow-sm border border-indigo-100 backdrop-blur-sm">
+                        <TrendingUp className="h-3 w-3 mr-1 text-indigo-600" />
+                        +{Math.floor(Math.random() * 50) + 10}%
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-bold text-xl mb-2 text-gray-900">{hobby.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{hobby.description}</p>
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {hobby.tags.slice(0, 3).map((tag) => (
+                        <span 
+                          key={tag} 
+                          className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {hobby.tags.length > 3 && (
+                        <span className="inline-block text-gray-500 text-xs px-1">
+                          +{hobby.tags.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Hobby stats */}
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <div className="flex items-center">
+                        <Flame className="w-4 h-4 mr-1 text-amber-500" />
+                        <span>Rising Fast</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-1" />
+                        <span>Growing</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Sparkles className="w-4 h-4 mr-1" />
+                        <span>Trending</span>
+                      </div>
+                    </div>
+                    
+                    <div className="h-[1px] w-full bg-gray-100 mb-4"></div>
+                    
+                    <Link href={`/hobby/${hobby.id}`} passHref legacyBehavior>
+                      <Button 
+                        variant="ghost" 
+                        className="text-indigo-600 p-0 h-auto font-medium hover:bg-transparent hover:text-indigo-700 group/btn"
+                        asChild
+                      >
+                        <a>
+                          Explore this hobby
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                        </a>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {filteredHobbies.length === 0 && !loading && (
+            <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-100">
+              <p className="text-gray-500 mb-2">No hobbies found matching your search.</p>
+              <Button 
+                variant="outline" 
+                className="mt-4 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
