@@ -30,7 +30,7 @@ export const Navbar = () => {
   const publicLinks = [
     { name: 'Home', href: '/' },
     { name: 'Discover', href: '/discover' },
-    { name: 'Community', href: '#community' },
+    { name: 'Community', href: '/community' },
   ]
 
   // Private links only visible to authenticated users

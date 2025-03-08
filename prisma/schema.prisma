@@ -22,4 +22,40 @@ model User {
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  communities Community[]
+  members Member[]
+}
+
+model Hobby {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  tags String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  communities Community[]
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  userId String
+  communityId String
+  role String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id])
+}
+
+model Community {
+  id        String   @id @default(uuid())
+  name      String
+  description String?
+  members Member[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId String
+  users User[]
+  hobbyId String
+  hobby Hobby @relation(fields: [hobbyId], references: [id])
 }

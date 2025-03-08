@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { use } from 'react'
+import { CommunityModalWrapper } from "@/components/wrappers/CommunityModalWrapper";
 
 // Define types for our data
 interface Resource {
@@ -165,18 +167,20 @@ const trendingHobbies: Hobby[] = [
   }
 ];
 
-export default function HobbyDetailPage({ params }: { params: { id: string } }) {
+export default function HobbyDetailPage({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  // Unwrap params using use() from React
+  const unwrappedParams = use(params as Promise<{ id: string }>);
   const [isLoading, setIsLoading] = useState(true);
   const [hobby, setHobby] = useState<Hobby | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  console.log(params.id);
+  console.log(unwrappedParams.id);
   
   useEffect(() => {
     // Simulate loading data
     const timer = setTimeout(() => {
       // Parse the ID as a number
-      const hobbyId = parseInt(params.id);
+      const hobbyId = parseInt(unwrappedParams.id);
       
       // Find the hobby with the matching ID
       const foundHobby = trendingHobbies.find(h => h.id === hobbyId);
@@ -186,7 +190,7 @@ export default function HobbyDetailPage({ params }: { params: { id: string } }) 
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [params.id]);
+  }, [unwrappedParams.id]);
   
   if (isLoading) {
     return (
@@ -308,9 +312,15 @@ export default function HobbyDetailPage({ params }: { params: { id: string } }) 
                 <Users className="h-12 w-12 mx-auto text-indigo-500 mb-4" />
                 <h2 className="text-2xl font-semibold mb-2">Join {hobby.communities.toLocaleString()}+ enthusiasts</h2>
                 <p className="text-gray-600 mb-6">Connect with others who share your interest in {hobby.title}</p>
-                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
                   Find Communities
                 </Button>
+                <p>Or</p>
+                <CommunityModalWrapper 
+                  hobbyId={String(unwrappedParams.id)} 
+                  variant="outline" 
+                  className="bg-white text-indigo-600 hover:bg-indigo-100" 
+                />
               </div>
             </TabsContent>
           </Tabs>
@@ -373,7 +383,7 @@ export default function HobbyDetailPage({ params }: { params: { id: string } }) 
                 
                 <div className="mt-6 space-y-3">
                   <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                    Join the Community
+                    Join a Community
                   </Button>
                   <div className="grid grid-cols-2 gap-3">
                     <Button 
