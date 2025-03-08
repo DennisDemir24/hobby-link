@@ -20,7 +20,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createCommunity } from "@/lib/actions/community.action";
+import { getHobbies } from "@/lib/actions/hobby.action";
+
+// Hobby interface
+interface Hobby {
+  id: string;
+  name: string;
+  description?: string | null;
+}
 
 // Form validation schema
 const formSchema = z.object({
@@ -32,6 +47,9 @@ const formSchema = z.object({
   description: z.string().max(500, {
     message: "Description must be less than 500 characters."
   }).optional(),
+  hobbyId: z.string().min(1, {
+    message: "Please select a hobby for this community."
+  }),
 });
 
 interface CreateCommunityModalProps {
@@ -42,6 +60,8 @@ interface CreateCommunityModalProps {
 export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunityModalProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hobbies, setHobbies] = useState<Hobby[]>([]);
+  const [isLoadingHobbies, setIsLoadingHobbies] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -50,14 +70,48 @@ export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunity
     defaultValues: {
       name: "",
       description: "",
+      hobbyId: hobbyId || "",
     },
   });
+
+  // Fetch hobbies when modal opens
+  useEffect(() => {
+    async function fetchHobbies() {
+      if (open) {
+        setIsLoadingHobbies(true);
+        try {
+          const fetchedHobbies = await getHobbies();
+          setHobbies(fetchedHobbies);
+          
+          // If a hobbyId was provided and it exists in the fetched hobbies, select it
+          if (hobbyId && fetchedHobbies.some(h => h.id === hobbyId)) {
+            form.setValue("hobbyId", hobbyId);
+          }
+        } catch (error) {
+          console.error("Failed to fetch hobbies:", error);
+          toast.error("Failed to load hobbies");
+        } finally {
+          setIsLoadingHobbies(false);
+        }
+      }
+    }
+    
+    fetchHobbies();
+  }, [open, hobbyId, form]);
 
   // Close modal when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Check if the click is outside the modal
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setOpen(false);
+        // Check if the click is on a select dropdown (which might be in a portal outside the modal)
+        const target = event.target as HTMLElement;
+        const isSelectDropdown = target.closest('[role="listbox"]') || 
+                                target.closest('[data-radix-popper-content-wrapper]');
+        
+        if (!isSelectDropdown) {
+          setOpen(false);
+        }
       }
     }
 
@@ -156,7 +210,7 @@ export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunity
       const community = await createCommunity({
         name: values.name,
         description: values.description || "",
-        hobbyId: hobbyId,
+        hobbyId: values.hobbyId,
       });
 
       toast.success("Community created successfully!");
@@ -207,7 +261,11 @@ export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunity
             </p>
             
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form 
+                onSubmit={form.handleSubmit(onSubmit)} 
+                className="space-y-4"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <FormField
                   control={form.control}
                   name="name"
@@ -242,6 +300,47 @@ export function CreateCommunityModal({ children, hobbyId = "" }: CreateCommunity
                           {...field} 
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="hobbyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="dark:text-gray-200">Hobby</FormLabel>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          disabled={isLoadingHobbies}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white dark:bg-gray-800">
+                              <SelectValue placeholder="Select a hobby" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent 
+                            position="popper" 
+                            sideOffset={5}
+                            className="max-h-[200px] overflow-y-auto z-[10000]"
+                          >
+                            {isLoadingHobbies ? (
+                              <SelectItem value="loading" disabled>Loading hobbies...</SelectItem>
+                            ) : (
+                              hobbies.map((hobby) => (
+                                <SelectItem key={hobby.id} value={hobby.id}>
+                                  {hobby.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <FormDescription className="dark:text-gray-400">
+                        Select the hobby this community is related to.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

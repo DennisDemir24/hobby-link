@@ -10,16 +10,26 @@ interface CommunityCardProps {
     name: string;
     description: string | null;
     createdAt: Date;
+    members: { userId: string }[];
   };
   memberCount: number;
+  currentUserId?: string;
 }
 
-export function CommunityCard({ community, memberCount }: CommunityCardProps) {
+export function CommunityCard({ community, memberCount, currentUserId }: CommunityCardProps) {
+  // Check if the current user is a member
+  const isMember = currentUserId ? community.members.some(member => member.userId === currentUserId) : false;
+
   return (
     <Link href={`/community/${community.id}`}>
       <Card className="h-full hover:shadow-md transition-shadow">
         <CardHeader>
-          <CardTitle className="line-clamp-1">{community.name}</CardTitle>
+          <div className="flex justify-between items-start">
+            <CardTitle className="line-clamp-1">{community.name}</CardTitle>
+            {isMember && (
+              <Badge variant="secondary" className="ml-2">Member</Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground line-clamp-3">

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
+import { JoinCommunityButton } from "@/components/community/JoinCommunityButton";
 
 interface CommunityPageProps {
   params: {
@@ -35,11 +36,21 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     notFound();
   }
 
+  // Check if the current user is a member
+  const isMember = community.members.some(member => member.userId === userId);
+
   return (
     <div className="container py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{community.name}</h1>
         <p className="text-muted-foreground mt-2">{community.description}</p>
+        
+        {/* Add join button if not a member */}
+        {!isMember && (
+          <div className="mt-4">
+            <JoinCommunityButton communityId={community.id} isMember={isMember} />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

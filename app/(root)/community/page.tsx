@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 
 import { CommunityCard } from "@/components/community/CommunityCard";
+import { CommunityModalWrapper } from "@/components/wrappers/CommunityModalWrapper";
 
 // Import the client component from a separate file
-import { CommunityModalWrapper } from "@/components/wrappers/CommunityModalWrapper";
+
 
 // Server component
 export default async function CommunitiesPage() {
