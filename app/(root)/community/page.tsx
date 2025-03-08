@@ -1,21 +1,24 @@
 import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/db";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 
 import { CommunityModalWrapper } from "@/components/wrappers/CommunityModalWrapper";
 import { CommunitiesFilter } from "@/components/community/CommunitiesFilter";
+import { Button } from "@/components/ui/button";
 
 
 // Server component
 export default async function CommunitiesPage() {
   const session = await auth();
-  const userId = session.userId;
+  const userId = session?.userId;
+  const isAuthenticated = !!userId;
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  // No longer redirecting unauthenticated users
+  // if (!userId) {
+  //   redirect("/sign-in");
+  // }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -28,15 +31,24 @@ export default async function CommunitiesPage() {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <CommunityModalWrapper 
-              className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-              buttonText={
-                <>
-                  <Plus className="h-4 w-4" />
-                  Add New Community
-                </>
-              }
-            />
+            {isAuthenticated ? (
+              <CommunityModalWrapper 
+                className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                buttonText={
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Community
+                  </>
+                }
+              />
+            ) : (
+              <Link href="/sign-in">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  <Users className="h-4 w-4 mr-2" />
+                  Sign in to create
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -48,7 +60,7 @@ export default async function CommunitiesPage() {
           ))}
         </div>
       }>
-        <CommunitiesList userId={userId} />
+        <CommunitiesList userId={userId || ""} />
       </Suspense>
     </div>
   );
@@ -68,7 +80,7 @@ async function CommunitiesList({ userId }: { userId: string }) {
         },
         members: {
           where: {
-            userId: userId
+            userId: userId || undefined
           },
           select: {
             userId: true
@@ -91,15 +103,24 @@ async function CommunitiesList({ userId }: { userId: string }) {
             Communities are a great way to connect with others who share your interests.
             Be the first to create a community!
           </p>
-          <CommunityModalWrapper 
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-            buttonText={
-              <>
-                <Plus className="h-4 w-4" />
-                Create Community
-              </>
-            }
-          />
+          {userId ? (
+            <CommunityModalWrapper 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              buttonText={
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Community
+                </>
+              }
+            />
+          ) : (
+            <Link href="/sign-in">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Users className="h-4 w-4 mr-2" />
+                Sign in to create
+              </Button>
+            </Link>
+          )}
         </div>
       );
     }

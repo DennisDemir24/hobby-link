@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, Users, Filter } from 'lucide-react';
+import { Search, Users, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -35,6 +35,9 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
     sortBy: 'newest' as 'newest' | 'oldest' | 'mostMembers',
   });
 
+  // Disable "My Memberships" filter if user is not authenticated
+  const isAuthenticated = !!userId;
+
   // Extract unique hobby names for filtering
   const hobbyNames = useMemo(() => {
     const names = communities.map(community => community.hobby.name);
@@ -52,8 +55,9 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
           community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (community.description && community.description.toLowerCase().includes(searchQuery.toLowerCase()));
         
-        // Membership filter
-        const matchesMembership = !filterOptions.onlyMyMemberships || 
+        // Membership filter - only apply if user is authenticated
+        const matchesMembership = !isAuthenticated ? true : 
+          !filterOptions.onlyMyMemberships || 
           community.members.some(member => member.userId === userId);
         
         // Hobby filter
@@ -72,7 +76,7 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
         }
         return 0;
       });
-  }, [communities, searchQuery, filterOptions, selectedHobbies, userId]);
+  }, [communities, searchQuery, filterOptions, selectedHobbies, userId, isAuthenticated]);
 
   // Toggle hobby selection
   const toggleHobby = (hobby: string) => {
@@ -94,24 +98,25 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
   };
 
   return (
-    <div>
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-grow">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input 
-            type="search" 
-            placeholder="Search communities..." 
-            className="pl-10 w-full"
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative w-full sm:w-auto sm:min-w-[300px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search communities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white"
           />
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Filter dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Filter</span>
+              <Button variant="outline" className="bg-white">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-white">
@@ -141,12 +146,18 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
                 <div className="font-medium mb-2">Membership</div>
                 <DropdownMenuCheckboxItem
                   checked={filterOptions.onlyMyMemberships}
-                  onCheckedChange={() => setFilterOptions(prev => ({ 
-                    ...prev, 
-                    onlyMyMemberships: !prev.onlyMyMemberships 
-                  }))}
+                  onCheckedChange={() => {
+                    if (isAuthenticated) {
+                      setFilterOptions(prev => ({ 
+                        ...prev,
+                        onlyMyMemberships: !prev.onlyMyMemberships 
+                      }));
+                    }
+                  }}
+                  disabled={!isAuthenticated}
+                  className={!isAuthenticated ? "opacity-50 cursor-not-allowed" : ""}
                 >
-                  Only my communities
+                  Only my communities {!isAuthenticated && "(Sign in to use)"}
                 </DropdownMenuCheckboxItem>
                 
                 {hobbyNames.length > 0 && (
@@ -167,67 +178,84 @@ export function CommunitiesFilter({ communities, userId }: CommunitiesFilterProp
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          
-          {(searchQuery || filterOptions.onlyMyMemberships || selectedHobbies.length > 0) && (
-            <Button variant="ghost" onClick={clearFilters}>
-              Clear
+
+          {/* Clear filters button */}
+          {(searchQuery || filterOptions.onlyMyMemberships || selectedHobbies.length > 0 || filterOptions.sortBy !== 'newest') && (
+            <Button 
+              variant="ghost" 
+              onClick={clearFilters}
+              className="h-10 px-3"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear filters
             </Button>
           )}
         </div>
       </div>
-      
+
       {/* Active filters display */}
       {(filterOptions.onlyMyMemberships || selectedHobbies.length > 0) && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm text-gray-500">Active filters:</span>
+          
           {filterOptions.onlyMyMemberships && (
-            <Badge variant="secondary" className="flex items-center gap-1">
+            <Badge variant="secondary" className="flex items-center gap-1 bg-indigo-50 text-indigo-700 border-indigo-100">
               <Users size={12} />
-              <span>My communities</span>
+              My communities
               <button 
-                className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+                className="ml-1 hover:bg-indigo-100 rounded-full p-0.5"
                 onClick={() => setFilterOptions(prev => ({ ...prev, onlyMyMemberships: false }))}
               >
-                ✕
+                <X size={12} />
               </button>
             </Badge>
           )}
           
           {selectedHobbies.map(hobby => (
-            <Badge key={hobby} variant="secondary" className="flex items-center gap-1">
-              <span>{hobby}</span>
+            <Badge 
+              key={hobby}
+              variant="secondary" 
+              className="flex items-center gap-1 bg-indigo-50 text-indigo-700 border-indigo-100"
+            >
+              {hobby}
               <button 
-                className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+                className="ml-1 hover:bg-indigo-100 rounded-full p-0.5"
                 onClick={() => toggleHobby(hobby)}
               >
-                ✕
+                <X size={12} />
               </button>
             </Badge>
           ))}
         </div>
       )}
-      
-      {filteredCommunities.length === 0 ? (
-        <div className="text-center py-10 bg-gray-50 rounded-xl">
-          <h3 className="text-lg font-medium">No communities found</h3>
-          <p className="text-muted-foreground mt-1 mb-4">
-            Try adjusting your search or filter criteria
-          </p>
-          <Button variant="outline" className="mt-4" onClick={clearFilters}>
-            Clear all filters
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCommunities.map((community) => (
+
+      {/* Communities grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredCommunities.length > 0 ? (
+          filteredCommunities.map(community => (
             <CommunityCard 
               key={community.id} 
               community={community} 
               memberCount={community._count.members}
               currentUserId={userId}
             />
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-16 bg-gray-50 rounded-xl">
+            <h3 className="text-xl font-medium text-gray-900">No communities found</h3>
+            <p className="text-muted-foreground mt-2 mb-4">
+              Try adjusting your filters or search query.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={clearFilters}
+              className="bg-white"
+            >
+              Clear all filters
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

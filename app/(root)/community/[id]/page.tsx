@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
@@ -17,10 +17,12 @@ interface CommunityPageProps {
 export default async function CommunityPage({ params }: CommunityPageProps) {
     const session = await auth();
     const userId = session?.userId;
+    const isAuthenticated = !!userId;
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  // No longer redirecting unauthenticated users
+  // if (!userId) {
+  //   redirect("/sign-in");
+  // }
 
   const community = await db.community.findUnique({
     where: {
@@ -40,8 +42,8 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
     notFound();
   }
 
-  // Check if the current user is a member
-  const isMember = community.members.some(member => member.userId === userId);
+  // Check if the current user is a member (only if authenticated)
+  const isMember = isAuthenticated ? community.members.some(member => member.userId === userId) : false;
 
   return (
     <div className="container py-6 max-w-7xl mx-auto">
@@ -67,12 +69,19 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
             <p className="text-gray-700 max-w-2xl">{community.description}</p>
           </div>
           
-          {/* Add join button if not a member */}
-          {!isMember && (
-            <div className="mt-2 md:mt-0">
-              <JoinCommunityButton communityId={community.id} isMember={isMember} />
-            </div>
-          )}
+          {/* Show join button or sign-in prompt based on authentication status */}
+          <div className="mt-2 md:mt-0">
+            {isAuthenticated ? (
+              !isMember && <JoinCommunityButton communityId={community.id} isMember={isMember} />
+            ) : (
+              <Link href="/sign-in">
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Sign in to join
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -93,10 +102,18 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                 <p className="text-gray-600 mb-4 max-w-md mx-auto">
                   Be the first to start a conversation in this community!
                 </p>
-                {isMember && (
-                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-                    Start a Discussion
-                  </button>
+                {isAuthenticated ? (
+                  isMember && (
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                      Start a Discussion
+                    </button>
+                  )
+                ) : (
+                  <Link href="/sign-in">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                      Sign in to participate
+                    </button>
+                  </Link>
                 )}
               </div>
             </CardContent>
@@ -116,10 +133,18 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
                 <p className="text-gray-600 mb-4 max-w-md mx-auto">
                   Stay tuned for future events in this community!
                 </p>
-                {isMember && (
-                  <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-                    Propose an Event
-                  </button>
+                {isAuthenticated ? (
+                  isMember && (
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                      Propose an Event
+                    </button>
+                  )
+                ) : (
+                  <Link href="/sign-in">
+                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                      Sign in to propose events
+                    </button>
+                  </Link>
                 )}
               </div>
             </CardContent>

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Clock, Users, BookOpen, CircleDot, TrendingUp, Plus } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
@@ -35,10 +35,12 @@ interface ExtendedHobby {
 export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) {
   const session = await auth();
   const userId = session?.userId;
+  const isAuthenticated = !!userId;
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  // No longer redirecting unauthenticated users
+  // if (!userId) {
+  //   redirect("/sign-in");
+  // }
 
   // Extract and validate the ID parameter
   const hobbyId = params.id;
@@ -138,12 +140,21 @@ export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) 
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Communities</h2>
-              <CreateCommunityModal hobbyId={hobby.id}>
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New Community
-                </Button>
-              </CreateCommunityModal>
+              {isAuthenticated ? (
+                <CreateCommunityModal hobbyId={hobby.id}>
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add New Community
+                  </Button>
+                </CreateCommunityModal>
+              ) : (
+                <Link href="/sign-in">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Users className="h-4 w-4 mr-1" />
+                    Sign in to create
+                  </Button>
+                </Link>
+              )}
             </div>
             
             {communities.length > 0 ? (

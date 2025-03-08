@@ -36,7 +36,6 @@ export const Navbar = () => {
   // Private links only visible to authenticated users
   const privateLinks = [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'My Hobbies', href: '/my-hobbies' },
     { name: 'Messages', href: '/messages' },
   ]
 

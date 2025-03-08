@@ -8,6 +8,7 @@ import { Search, X, Plus, ArrowRight, Flame, TrendingUp, Users, Sparkles } from 
 import { getHobbies } from '@/lib/actions/hobby.action'
 import { CreateHobbyModal } from '@/components/modals/CreateHobbyModal'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@clerk/nextjs'
 
 // Define types for our data
 interface Hobby {
@@ -29,6 +30,7 @@ const DiscoverPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [hobbies, setHobbies] = useState<Hobby[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isSignedIn } = useAuth();
   
   useEffect(() => {
     async function fetchHobbies() {
@@ -72,12 +74,21 @@ const DiscoverPage = () => {
           <h1 className="text-3xl font-bold mb-2">Discover New Hobbies</h1>
           <p className="text-gray-600">Explore trending hobbies and find your next passion</p>
         </div>
-        <CreateHobbyModal>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Hobby
-          </Button>
-        </CreateHobbyModal>
+        {isSignedIn ? (
+          <CreateHobbyModal>
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Hobby
+            </Button>
+          </CreateHobbyModal>
+        ) : (
+          <Link href="/sign-in">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Users className="h-4 w-4 mr-2" />
+              Sign in to create
+            </Button>
+          </Link>
+        )}
       </div>
       
       {/* Search bar */}
