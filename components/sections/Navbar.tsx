@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'
 import { Menu, X, ChevronRight, Users, Heart, Puzzle } from 'lucide-react'
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
+import NotificationBell from '@/components/activity/NotificationBell'
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -88,6 +89,9 @@ export const Navbar = () => {
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             <SignedIn>
+              {/* Notification Bell */}
+              <NotificationBell />
+              
               {/* User profile button with built-in logout */}
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
@@ -207,7 +211,10 @@ export const Navbar = () => {
                   <div className="p-6 space-y-3 border-t border-indigo-50 bg-white">
                     <SignedIn>
                       <div className="flex items-center justify-between mb-4">
-                        <UserButton afterSignOutUrl="/" />
+                        <div className="flex items-center gap-2">
+                          <NotificationBell />
+                          <UserButton afterSignOutUrl="/" />
+                        </div>
                         <span className="text-sm font-medium text-gray-700">Your Account</span>
                       </div>
                     </SignedIn>

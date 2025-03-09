@@ -27,6 +27,8 @@ model User {
   posts Post[]
   comments Comment[]
   likes Like[]
+  activities Activity[]
+  receivedActivities Activity[] @relation("ReceivedActivities")
 }
 
 model Hobby {
@@ -67,6 +69,7 @@ model Community {
   hobbyId String
   hobby Hobby @relation(fields: [hobbyId], references: [id])
   posts Post[]
+  activities Activity[]
 }
 
 model Post {
@@ -86,6 +89,7 @@ model Post {
   comments    Comment[]
   likes       Like[]
   tags        String[]
+  activities Activity[]
 }
 
 model Comment {
@@ -112,4 +116,29 @@ model Like {
   post        Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
   
   @@unique([userId, postId]) // A user can only like a post once
+}
+
+model Activity {
+  id          String      @id @default(uuid())
+  type        String      // e.g., "post_created", "comment_created", "user_joined"
+  content     String?     // Optional content description
+  createdAt   DateTime    @default(now())
+  isRead      Boolean     @default(false)  // Track if the activity has been read
+  
+  // Relations
+  userId      String?     // The user who performed the action (optional for system activities)
+  user        User?       @relation(fields: [userId], references: [clerkUserId], onDelete: SetNull)
+  
+  communityId String?     // Related community (optional)
+  community   Community?  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  
+  postId      String?     // Related post (optional)
+  post        Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // For efficient querying
+  recipientId String?     // For targeted activities (e.g., mentions)
+  recipient   User?       @relation("ReceivedActivities", fields: [recipientId], references: [clerkUserId], onDelete: SetNull)
+  
+  // Metadata
+  metadata    Json?       // Additional data specific to activity type
 }

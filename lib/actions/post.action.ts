@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { createActivity } from "./activity.action";
 
 interface CreatePostParams {
   title: string;
@@ -72,18 +73,19 @@ export async function createPost({
       data: {
         title,
         content,
+        authorId: userId,
+        communityId,
         tags,
-        author: {
-          connect: {
-            clerkUserId: userId,
-          },
-        },
-        community: {
-          connect: {
-            id: communityId,
-          },
-        },
       },
+    });
+
+    // Create activity for the new post
+    await createActivity({
+      type: "post_created",
+      userId,
+      communityId,
+      postId: post.id,
+      content: `${user.name || "Someone"} created a new post: ${title}`,
     });
 
     // Revalidate relevant paths
@@ -92,7 +94,7 @@ export async function createPost({
     return post;
   } catch (error) {
     console.error("Error creating post:", error);
-    throw error;
+    throw new Error("Failed to create post");
   }
 }
 
@@ -186,25 +188,54 @@ export async function likePost(postId: string) {
       throw new Error("Unauthorized");
     }
 
+    // Verify the user exists in our database
+    let user = await db.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      // Get user details from Clerk
+      const clerkUser = await currentUser();
+      
+      if (!clerkUser) {
+        throw new Error("User not found");
+      }
+
+      user = await db.user.create({
+        data: {
+          clerkUserId: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress || `user-${userId}@example.com`,
+          name: clerkUser.firstName || "User",
+          imageUrl: clerkUser.imageUrl,
+        }
+      });
+    }
+
     // Check if the post exists
     const post = await db.post.findUnique({
       where: { id: postId },
       include: {
-        likes: {
-          where: {
-            userId,
-          },
-        },
-      },
+        author: true,
+        community: true,
+      }
     });
 
     if (!post) {
       throw new Error("Post not found");
     }
 
-    // Toggle like: Remove if exists, add if doesn't
-    if (post.likes.length > 0) {
-      // Unlike the post
+    // Check if the user has already liked the post
+    const existingLike = await db.like.findUnique({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      // If the user has already liked the post, remove the like
       await db.like.delete({
         where: {
           userId_postId: {
@@ -213,21 +244,31 @@ export async function likePost(postId: string) {
           },
         },
       });
-    } else {
-      // Like the post
-      await db.like.create({
-        data: {
-          user: {
-            connect: {
-              clerkUserId: userId,
-            },
-          },
-          post: {
-            connect: {
-              id: postId,
-            },
-          },
-        },
+
+      // Revalidate relevant paths
+      revalidatePath(`/community/${post.communityId}`);
+      revalidatePath(`/community/${post.communityId}/post/${postId}`);
+
+      return { liked: false };
+    }
+
+    // If the user hasn't liked the post, add a like
+    await db.like.create({
+      data: {
+        userId,
+        postId,
+      },
+    });
+
+    // Create activity for the like, but only if the user is not liking their own post
+    if (post.authorId !== userId) {
+      await createActivity({
+        type: "post_liked",
+        userId,
+        communityId: post.communityId,
+        postId,
+        content: `${user.name || "Someone"} liked your post: ${post.title}`,
+        recipientId: post.authorId, // Send notification to post author
       });
     }
 
@@ -235,10 +276,10 @@ export async function likePost(postId: string) {
     revalidatePath(`/community/${post.communityId}`);
     revalidatePath(`/community/${post.communityId}/post/${postId}`);
 
-    return { success: true };
+    return { liked: true };
   } catch (error) {
-    console.error("Error toggling post like:", error);
-    throw error;
+    console.error("Error liking post:", error);
+    throw new Error("Failed to like post");
   }
 }
 
@@ -251,45 +292,62 @@ export async function createComment(postId: string, content: string) {
       throw new Error("Unauthorized");
     }
 
+    // Verify the user exists in our database
+    let user = await db.user.findUnique({
+      where: { clerkUserId: userId }
+    });
+
+    if (!user) {
+      // Get user details from Clerk
+      const clerkUser = await currentUser();
+      
+      if (!clerkUser) {
+        throw new Error("User not found");
+      }
+
+      user = await db.user.create({
+        data: {
+          clerkUserId: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress || `user-${userId}@example.com`,
+          name: clerkUser.firstName || "User",
+          imageUrl: clerkUser.imageUrl,
+        }
+      });
+    }
+
     // Check if the post exists
     const post = await db.post.findUnique({
       where: { id: postId },
       include: {
-        community: {
-          include: {
-            members: {
-              where: { userId },
-            },
-          },
-        },
-      },
+        author: true,
+        community: true,
+      }
     });
 
     if (!post) {
       throw new Error("Post not found");
     }
 
-    // Verify user is a member of the community
-    if (post.community.members.length === 0) {
-      throw new Error("You must be a member of the community to comment");
-    }
-
     // Create the comment
     const comment = await db.comment.create({
       data: {
         content,
-        author: {
-          connect: {
-            clerkUserId: userId,
-          },
-        },
-        post: {
-          connect: {
-            id: postId,
-          },
-        },
+        authorId: userId,
+        postId,
       },
     });
+
+    // Create activity for the comment, but only if the user is not commenting on their own post
+    if (post.authorId !== userId) {
+      await createActivity({
+        type: "post_commented",
+        userId,
+        communityId: post.communityId,
+        postId,
+        content: `${user.name || "Someone"} commented on your post: ${post.title}`,
+        recipientId: post.authorId, // Send notification to post author
+      });
+    }
 
     // Revalidate relevant paths
     revalidatePath(`/community/${post.communityId}`);
@@ -298,7 +356,7 @@ export async function createComment(postId: string, content: string) {
     return comment;
   } catch (error) {
     console.error("Error creating comment:", error);
-    throw error;
+    throw new Error("Failed to create comment");
   }
 }
 
