@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'
 import { Menu, X, ChevronRight, Users, Heart, Puzzle } from 'lucide-react'
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
+import NotificationBell from '@/components/activity/NotificationBell'
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -36,7 +37,6 @@ export const Navbar = () => {
   // Private links only visible to authenticated users
   const privateLinks = [
     { name: 'Dashboard', href: '/dashboard' },
-    { name: 'My Hobbies', href: '/my-hobbies' },
     { name: 'Messages', href: '/messages' },
   ]
 
@@ -89,6 +89,9 @@ export const Navbar = () => {
           {/* Desktop CTA Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             <SignedIn>
+              {/* Notification Bell */}
+              <NotificationBell />
+              
               {/* User profile button with built-in logout */}
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
@@ -111,21 +114,22 @@ export const Navbar = () => {
                   <Menu className="h-6 w-6 text-gray-700" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:w-[350px] p-0 border-l border-indigo-100">
+              <SheetContent side="right" className="w-full sm:w-[350px] p-0 border-l border-indigo-100 [&>button]:hidden">
                 <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50">
                   {/* Mobile Menu Header */}
                   <div className="p-6 flex items-center justify-between border-b border-indigo-50">
                     <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                       HobbyLink
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="rounded-full hover:bg-gray-100"
-                    >
-                      <X className="h-5 w-5 text-gray-500" />
-                    </Button>
+                    <SheetClose asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full hover:bg-gray-100"
+                      >
+                        <X className="h-5 w-5 text-gray-500" />
+                      </Button>
+                    </SheetClose>
                   </div>
 
                   {/* Mobile Menu Links */}
@@ -137,10 +141,13 @@ export const Navbar = () => {
                           key={link.name}
                           href={link.href}
                           className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span>{link.name}</span>
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
+                          <SheetClose asChild>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{link.name}</span>
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                            </div>
+                          </SheetClose>
                         </Link>
                       ))}
                       
@@ -151,10 +158,13 @@ export const Navbar = () => {
                             key={link.name}
                             href={link.href}
                             className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
-                            onClick={() => setIsMobileMenuOpen(false)}
                           >
-                            <span>{link.name}</span>
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                            <SheetClose asChild>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{link.name}</span>
+                                <ChevronRight className="h-4 w-4 text-gray-400" />
+                              </div>
+                            </SheetClose>
                           </Link>
                         ))}
                       </SignedIn>
@@ -201,18 +211,29 @@ export const Navbar = () => {
                   <div className="p-6 space-y-3 border-t border-indigo-50 bg-white">
                     <SignedIn>
                       <div className="flex items-center justify-between mb-4">
-                        <UserButton afterSignOutUrl="/" />
+                        <div className="flex items-center gap-2">
+                          <NotificationBell />
+                          <UserButton afterSignOutUrl="/" />
+                        </div>
                         <span className="text-sm font-medium text-gray-700">Your Account</span>
                       </div>
                     </SignedIn>
                     
                     <SignedOut>
-                      <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-6 h-auto shadow-lg shadow-indigo-200 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-200">
-                        <Link href="/sign-up" className="w-full">Sign up for free</Link>
-                      </Button>
-                      <Button variant="outline" className="w-full rounded-xl py-6 h-auto border-gray-200 hover:bg-gray-50 hover:border-gray-300">
-                        <Link href="/sign-in" className="w-full">Log in to account</Link>
-                      </Button>
+                      <Link href="/sign-up" className="w-full">
+                        <SheetClose asChild>
+                          <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-6 h-auto shadow-lg shadow-indigo-200 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-200">
+                            Sign up for free
+                          </Button>
+                        </SheetClose>
+                      </Link>
+                      <Link href="/sign-in" className="w-full">
+                        <SheetClose asChild>
+                          <Button variant="outline" className="w-full rounded-xl py-6 h-auto border-gray-200 hover:bg-gray-50 hover:border-gray-300">
+                            Log in to account
+                          </Button>
+                        </SheetClose>
+                      </Link>
                     </SignedOut>
                   </div>
                 </div>

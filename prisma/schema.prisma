@@ -24,6 +24,11 @@ model User {
   updatedAt DateTime @updatedAt
   communities Community[]
   members Member[]
+  posts Post[]
+  comments Comment[]
+  likes Like[]
+  activities Activity[]
+  receivedActivities Activity[] @relation("ReceivedActivities")
 }
 
 model Hobby {
@@ -31,6 +36,11 @@ model Hobby {
   name      String
   description String?
   tags String[]
+  emoji     String?
+  difficulty String?
+  timeCommitment String?
+  costRange String?
+  location  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   communities Community[]
@@ -58,4 +68,77 @@ model Community {
   users User[]
   hobbyId String
   hobby Hobby @relation(fields: [hobbyId], references: [id])
+  posts Post[]
+  activities Activity[]
+}
+
+model Post {
+  id          String      @id @default(uuid())
+  title       String
+  content     String      @db.Text
+  published   Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  authorId    String      // Clerk User ID
+  author      User        @relation(fields: [authorId], references: [clerkUserId], onDelete: Cascade)
+  
+  communityId String
+  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  
+  comments    Comment[]
+  likes       Like[]
+  tags        String[]
+  activities Activity[]
+}
+
+model Comment {
+  id          String      @id @default(uuid())
+  content     String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  authorId    String      // Clerk User ID
+  author      User        @relation(fields: [authorId], references: [clerkUserId], onDelete: Cascade)
+  
+  postId      String
+  post        Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id          String      @id @default(uuid())
+  createdAt   DateTime    @default(now())
+  
+  userId      String      // Clerk User ID
+  user        User        @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  
+  postId      String
+  post        Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId]) // A user can only like a post once
+}
+
+model Activity {
+  id          String      @id @default(uuid())
+  type        String      // e.g., "post_created", "comment_created", "user_joined"
+  content     String?     // Optional content description
+  createdAt   DateTime    @default(now())
+  isRead      Boolean     @default(false)  // Track if the activity has been read
+  
+  // Relations
+  userId      String?     // The user who performed the action (optional for system activities)
+  user        User?       @relation(fields: [userId], references: [clerkUserId], onDelete: SetNull)
+  
+  communityId String?     // Related community (optional)
+  community   Community?  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  
+  postId      String?     // Related post (optional)
+  post        Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  // For efficient querying
+  recipientId String?     // For targeted activities (e.g., mentions)
+  recipient   User?       @relation("ReceivedActivities", fields: [recipientId], references: [clerkUserId], onDelete: SetNull)
+  
+  // Metadata
+  metadata    Json?       // Additional data specific to activity type
 }

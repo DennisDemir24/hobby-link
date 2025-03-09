@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { createActivity } from "./activity.action";
 
 interface CreateCommunityParams {
     name: string;
@@ -165,12 +166,7 @@ interface CreateCommunityParams {
       // Check if the community exists
       const community = await db.community.findUnique({
         where: { id: communityId },
-        include: {
-          members: {
-            where: { userId },
-          },
-          hobby: true,
-        },
+        include: { members: true }
       });
 
       if (!community) {
@@ -178,38 +174,40 @@ interface CreateCommunityParams {
       }
 
       // Check if the user is already a member
-      if (community.members.length > 0) {
+      const existingMembership = await db.member.findFirst({
+        where: {
+          userId,
+          communityId
+        }
+      });
+
+      if (existingMembership) {
         throw new Error("You are already a member of this community");
       }
 
-      // Add the user as a member with MEMBER role
-      await db.member.create({
+      // Add the user as a member with "member" role
+      const membership = await db.member.create({
         data: {
           userId,
           communityId,
-          role: "MEMBER",
-        },
+          role: "member"
+        }
       });
 
-      // Connect the user to the community
-      await db.community.update({
-        where: { id: communityId },
-        data: {
-          users: {
-            connect: {
-              clerkUserId: userId,
-            },
-          },
-        },
+      // Create activity for joining the community
+      await createActivity({
+        type: "user_joined",
+        userId,
+        communityId,
+        content: `${user.name || "Someone"} joined the community`,
       });
 
-      // Revalidate relevant paths
+      // Revalidate the community page
       revalidatePath(`/community/${communityId}`);
-      revalidatePath(`/hobby/${community.hobby.id}`);
 
-      return { success: true };
+      return membership;
     } catch (error) {
       console.error("Error joining community:", error);
-      throw error;
+      throw new Error("Failed to join community");
     }
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CreateCommunityModal } from "@/components/modals/CreateCommunityModal";
 
@@ -7,7 +8,7 @@ interface CommunityModalWrapperProps {
   hobbyId?: string;
   variant?: "default" | "outline";
   className?: string;
-  buttonText?: string;
+  buttonText?: ReactNode;
 }
 
 export function CommunityModalWrapper({ 

@@ -33,7 +33,11 @@ export function JoinCommunityButton({ communityId, isMember }: JoinCommunityButt
 
   if (isMember) {
     return (
-      <Button variant="outline" disabled>
+      <Button 
+        variant="outline" 
+        disabled 
+        className="border-indigo-200 bg-indigo-50 text-indigo-700"
+      >
         <Users className="mr-2 h-4 w-4" />
         Already a Member
       </Button>
@@ -41,7 +45,11 @@ export function JoinCommunityButton({ communityId, isMember }: JoinCommunityButt
   }
 
   return (
-    <Button onClick={handleJoin} disabled={isLoading}>
+    <Button 
+      onClick={handleJoin} 
+      disabled={isLoading}
+      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+    >
       <Users className="mr-2 h-4 w-4" />
       {isLoading ? "Joining..." : "Join Community"}
     </Button>

@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, MapPin, Clock, Users, BookOpen, CircleDot, TrendingUp, Plus } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
@@ -29,21 +29,26 @@ interface ExtendedHobby {
   timeCommitment?: string;
   costRange?: string;
   location?: string;
-  imageUrl?: string;
+  emoji?: string;
 }
 
 export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) {
   const session = await auth();
   const userId = session?.userId;
+  const isAuthenticated = !!userId;
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  // No longer redirecting unauthenticated users
+  // if (!userId) {
+  //   redirect("/sign-in");
+  // }
+
+  // Extract and validate the ID parameter
+  const hobbyId = params.id;
 
   // Fetch the hobby details
   const hobby = await db.hobby.findUnique({
     where: {
-      id: params.id,
+      id: hobbyId,
     },
   }) as unknown as ExtendedHobby;
 
@@ -52,10 +57,7 @@ export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) 
   }
 
   // Fetch communities related to this hobby
-  const communities = await getCommunitiesByHobby(params.id);
-
-  // Default image if none is provided
-  const hobbyImage = hobby.imageUrl || "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80";
+  const communities = await getCommunitiesByHobby(hobbyId);
 
   return (
     <div className="container py-6 max-w-7xl mx-auto">
@@ -81,12 +83,10 @@ export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) 
               </Badge>
             </div>
             <div className="w-full h-full flex items-center justify-center">
-              {hobby.imageUrl ? (
-                <img 
-                  src={hobbyImage} 
-                  alt={hobby.name} 
-                  className="w-full h-full object-cover"
-                />
+              {hobby.emoji ? (
+                <div className="text-8xl">
+                  {hobby.emoji}
+                </div>
               ) : (
                 <div className="text-6xl">
                   {/* Placeholder emoji based on hobby name */}
@@ -140,12 +140,21 @@ export default async function HobbyDetailPage({ params }: HobbyDetailPageProps) 
           <div>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Communities</h2>
-              <CreateCommunityModal hobbyId={hobby.id}>
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add New Community
-                </Button>
-              </CreateCommunityModal>
+              {isAuthenticated ? (
+                <CreateCommunityModal hobbyId={hobby.id}>
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add New Community
+                  </Button>
+                </CreateCommunityModal>
+              ) : (
+                <Link href="/sign-in">
+                  <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Users className="h-4 w-4 mr-1" />
+                    Sign in to create
+                  </Button>
+                </Link>
+              )}
             </div>
             
             {communities.length > 0 ? (

@@ -1,38 +1,72 @@
 import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/db";
+import { Plus, Users } from "lucide-react";
 
-import { CommunityCard } from "@/components/community/CommunityCard";
 import { CommunityModalWrapper } from "@/components/wrappers/CommunityModalWrapper";
-
-// Import the client component from a separate file
+import { CommunitiesFilter } from "@/components/community/CommunitiesFilter";
+import { Button } from "@/components/ui/button";
 
 
 // Server component
 export default async function CommunitiesPage() {
   const session = await auth();
-  const userId = session.userId;
+  const userId = session?.userId;
+  const isAuthenticated = !!userId;
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
+  // No longer redirecting unauthenticated users
+  // if (!userId) {
+  //   redirect("/sign-in");
+  // }
 
   return (
-    <div className="container py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Communities</h1>
-        <CommunityModalWrapper />
+    <div className="max-w-7xl mx-auto">
+      <div className="mb-8 pb-6 border-b">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Communities</h1>
+            <p className="text-muted-foreground mt-1">
+              Connect with others who share your interests
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {isAuthenticated ? (
+              <CommunityModalWrapper 
+                className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                buttonText={
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Community
+                  </>
+                }
+              />
+            ) : (
+              <Link href="/sign-in">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  <Users className="h-4 w-4 mr-2" />
+                  Sign in to create
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
 
-      <Suspense fallback={<div>Loading communities...</div>}>
-        <CommunitiesList />
+      <Suspense fallback={
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-64 bg-gray-100 rounded-xl"></div>
+          ))}
+        </div>
+      }>
+        <CommunitiesList userId={userId || ""} />
       </Suspense>
     </div>
   );
 }
 
-async function CommunitiesList() {
+async function CommunitiesList({ userId }: { userId: string }) {
   try {
     const communities = await db.community.findMany({
       orderBy: {
@@ -44,40 +78,72 @@ async function CommunitiesList() {
             members: true,
           },
         },
+        members: {
+          where: {
+            userId: userId || undefined
+          },
+          select: {
+            userId: true
+          }
+        },
+        hobby: {
+          select: {
+            name: true
+          }
+        }
       },
       take: 50,
     });
 
     if (communities.length === 0) {
       return (
-        <div className="text-center py-10">
-          <h3 className="text-lg font-medium">No communities yet</h3>
-          <p className="text-muted-foreground mt-1">
+        <div className="text-center py-16 bg-gray-50 rounded-xl">
+          <h3 className="text-xl font-medium text-gray-900">No communities yet</h3>
+          <p className="text-muted-foreground mt-2 mb-6 max-w-md mx-auto">
+            Communities are a great way to connect with others who share your interests.
             Be the first to create a community!
           </p>
+          {userId ? (
+            <CommunityModalWrapper 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              buttonText={
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Community
+                </>
+              }
+            />
+          ) : (
+            <Link href="/sign-in">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                <Users className="h-4 w-4 mr-2" />
+                Sign in to create
+              </Button>
+            </Link>
+          )}
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {communities.map((community) => (
-          <CommunityCard 
-            key={community.id} 
-            community={community} 
-            memberCount={community._count.members} 
-          />
-        ))}
-      </div>
+      <>
+        <CommunitiesFilter communities={communities} userId={userId} />
+      </>
     );
   } catch (error) {
     console.error("Error fetching communities:", error);
     return (
-      <div className="text-center py-10">
+      <div className="text-center py-10 bg-red-50 rounded-xl">
         <h3 className="text-lg font-medium text-destructive">Error loading communities</h3>
-        <p className="text-muted-foreground mt-1">
-          Please try again later.
+        <p className="text-muted-foreground mt-1 mb-4">
+          We encountered an issue while loading communities.
         </p>
+        <button 
+          className="px-4 py-2 border rounded-md hover:bg-gray-50"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </button>
       </div>
     );
   }
