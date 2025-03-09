@@ -3,10 +3,13 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { JoinCommunityButton } from "@/components/community/JoinCommunityButton";
-import { ArrowLeft, Users, Calendar, MessageSquare, Info, Tag } from "lucide-react";
+import { ArrowLeft, Users, Calendar, MessageSquare, Info, Tag, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getPosts } from "@/lib/actions/post.action";
+import { PostCard } from "@/components/post/PostCard";
+import { Button } from "@/components/ui/button";
 
 interface CommunityPageProps {
   params: {
@@ -44,6 +47,9 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
 
   // Check if the current user is a member (only if authenticated)
   const isMember = isAuthenticated ? community.members.some(member => member.userId === userId) : false;
+
+  // Get community posts
+  const posts = await getPosts(params.id);
 
   return (
     <div className="container py-6 max-w-7xl mx-auto">
@@ -89,33 +95,57 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
         <div className="md:col-span-2">
           {/* Community content will go here */}
           <Card className="border border-gray-100 shadow-sm hover:border-indigo-100 transition-all duration-300">
-            <CardHeader className="pb-3 border-b">
+            <CardHeader className="pb-3 border-b flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-gray-900">
                 <MessageSquare className="h-5 w-5 text-indigo-600" />
                 Community Discussions
               </CardTitle>
+              {isAuthenticated && isMember && (
+                <Link href={`/community/${params.id}/create-post`}>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Plus className="h-4 w-4 mr-1" />
+                    New Post
+                  </Button>
+                </Link>
+              )}
             </CardHeader>
             <CardContent className="p-6">
-              <div className="text-center py-8">
-                <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
-                <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                  Be the first to start a conversation in this community!
-                </p>
-                {isAuthenticated ? (
-                  isMember && (
-                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-                      Start a Discussion
-                    </button>
-                  )
-                ) : (
-                  <Link href="/sign-in">
-                    <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
-                      Sign in to participate
-                    </button>
-                  </Link>
-                )}
-              </div>
+              {posts.length > 0 ? (
+                <div className="space-y-6">
+                  {posts.map((post) => (
+                    <PostCard 
+                      key={post.id} 
+                      post={post} 
+                      currentUserId={userId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No discussions yet</h3>
+                  <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                    Be the first to start a conversation in this community!
+                  </p>
+                  {isAuthenticated ? (
+                    isMember ? (
+                      <Link href={`/community/${params.id}/create-post`}>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                          Start a Discussion
+                        </Button>
+                      </Link>
+                    ) : (
+                      <JoinCommunityButton communityId={community.id} isMember={isMember} />
+                    )
+                  ) : (
+                    <Link href="/sign-in">
+                      <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        Sign in to participate
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
