@@ -74,7 +74,7 @@ export default function NotificationBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-0 max-h-[400px] overflow-hidden flex flex-col" 
+        className="w-80 p-0 max-h-[400px] overflow-hidden flex flex-col bg-white" 
         align="end"
       >
         <div className="p-4 border-b">

@@ -29,6 +29,12 @@ model User {
   likes Like[]
   activities Activity[]
   receivedActivities Activity[] @relation("ReceivedActivities")
+  
+  // Messaging relations
+  conversations ConversationParticipant[]
+  messages Message[]
+  readMessages MessageRead[]
+  createdConversations Conversation[] @relation("CreatedConversations")
 }
 
 model Hobby {
@@ -70,6 +76,7 @@ model Community {
   hobby Hobby @relation(fields: [hobbyId], references: [id])
   posts Post[]
   activities Activity[]
+  conversations Conversation[]
 }
 
 model Post {
@@ -141,4 +148,70 @@ model Activity {
   
   // Metadata
   metadata    Json?       // Additional data specific to activity type
+}
+
+// Messaging models
+model Conversation {
+  id          String      @id @default(uuid())
+  name        String?     // For group chats
+  isGroup     Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  messages    Message[]
+  participants ConversationParticipant[]
+  
+  // Creator (for group chats)
+  creatorId   String?     // Clerk User ID
+  creator     User?       @relation("CreatedConversations", fields: [creatorId], references: [clerkUserId], onDelete: SetNull)
+  
+  // For community context
+  communityId String?
+  community   Community?  @relation(fields: [communityId], references: [id], onDelete: SetNull)
+}
+
+model ConversationParticipant {
+  id              String      @id @default(uuid())
+  userId          String      // Clerk User ID
+  conversationId  String
+  hasSeenLatest   Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  
+  // Relations
+  user            User        @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, conversationId]) // A user can only be in a conversation once
+}
+
+model Message {
+  id              String      @id @default(uuid())
+  content         String      @db.Text
+  imageUrl        String?     // Optional image attachment
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  senderId        String      // Clerk User ID
+  sender          User        @relation(fields: [senderId], references: [clerkUserId], onDelete: Cascade)
+  
+  conversationId  String
+  conversation    Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  // For tracking message status
+  readBy          MessageRead[]
+}
+
+model MessageRead {
+  id              String      @id @default(uuid())
+  userId          String      // Clerk User ID
+  messageId       String
+  readAt          DateTime    @default(now())
+  
+  // Relations
+  user            User        @relation(fields: [userId], references: [clerkUserId], onDelete: Cascade)
+  message         Message     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, messageId]) // A user can only read a message once
 }
