@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'
-import { Menu, X, ChevronRight, Users, Heart, Puzzle } from 'lucide-react'
+import { Menu, X, Users, Heart, Puzzle, Search, Home, MessageSquare, User, Settings } from 'lucide-react'
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
 import NotificationBell from '@/components/activity/NotificationBell'
 
 export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,15 +31,16 @@ export const Navbar = () => {
 
   // Public links visible to all users
   const publicLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Discover', href: '/discover' },
-    { name: 'Community', href: '/community' },
+    { name: 'Home', href: '/', icon: Home },
+    { name: 'Discover', href: '/discover', icon: Search },
+    { name: 'Community', href: '/community', icon: Users },
   ]
 
   // Private links only visible to authenticated users
   const privateLinks = [
-    { name: 'Dashboard', href: '/dashboard' },
-    { name: 'Messages', href: '/messages' },
+    { name: 'Dashboard', href: '/dashboard', icon: User },
+    { name: 'Messages', href: '/messages', icon: MessageSquare },
+    /* { name: 'Profile', href: '/profile', icon: Settings }, */
   ]
 
   return (
@@ -62,27 +65,43 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1">
             {/* Public links visible to everyone */}
-            {publicLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-md transition-colors"
-              >
-                {link.name}
-              </Link>
-            ))}
-            
-            {/* Private links only visible when signed in */}
-            <SignedIn>
-              {privateLinks.map((link) => (
+            {publicLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 rounded-md transition-colors"
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    isActive
+                      ? 'text-indigo-600'
+                      : 'text-gray-700 hover:text-indigo-600'
+                  }`}
                 >
+                  {/* <link.icon className={`h-4 w-4 mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} /> */}
                   {link.name}
                 </Link>
-              ))}
+              );
+            })}
+            
+            {/* Private links only visible when signed in */}
+            <SignedIn>
+              {privateLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive
+                        ? 'text-indigo-600'
+                        : 'text-gray-700 hover:text-indigo-600'
+                    }`}
+                  >
+                      {/* <link.icon className={`h-4 w-4 mr-2 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} /> */}
+                    {link.name}
+                  </Link>
+                );
+              })}
             </SignedIn>
           </nav>
 
@@ -97,10 +116,10 @@ export const Navbar = () => {
             </SignedIn>
             
             <SignedOut>
-              <Button variant="ghost" className="text-gray-700 hover:text-indigo-600 border border-indigo-100 cursor-pointer">
+              <Button variant="ghost" className="text-gray-700 hover:text-indigo-600 border border-indigo-100">
                 <Link href="/sign-in">Log in</Link>
               </Button>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer">
+              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white">
                 <Link href="/sign-up">Sign up</Link>
               </Button>
             </SignedOut>
@@ -115,12 +134,14 @@ export const Navbar = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full sm:w-[350px] p-0 border-l border-indigo-100 [&>button]:hidden">
-                <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50">
+                <div className="flex flex-col h-full bg-white">
                   {/* Mobile Menu Header */}
                   <div className="p-6 flex items-center justify-between border-b border-indigo-50">
-                    <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                      HobbyLink
-                    </span>
+                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                      <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                        HobbyLink
+                      </span>
+                    </Link>
                     <SheetClose asChild>
                       <Button
                         variant="ghost"
@@ -133,46 +154,75 @@ export const Navbar = () => {
                   </div>
 
                   {/* Mobile Menu Links */}
-                  <div className="flex-1 overflow-auto py-6">
-                    <nav className="flex flex-col space-y-1 px-6 mb-8">
-                      {/* Public links visible to everyone */}
-                      {publicLinks.map((link) => (
-                        <Link
-                          key={link.name}
-                          href={link.href}
-                          className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
-                        >
-                          <SheetClose asChild>
-                            <div className="flex items-center justify-between w-full">
+                  <div className="flex-1 overflow-auto py-6 space-y-8">
+                    {/* User Profile Section */}
+                    <SignedIn>
+                      <div className="px-6">
+                        <div className="flex items-center gap-4 px-4 py-3 bg-indigo-50/50 rounded-xl">
+                          <UserButton afterSignOutUrl="/" />
+                          <div>
+                            <p className="font-medium text-gray-900">Your Account</p>
+                            <p className="text-sm text-gray-500">View profile and settings</p>
+                          </div>
+                        </div>
+                      </div>
+                    </SignedIn>
+                  
+                    {/* Main Navigation */}
+                    <div className="px-6">
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">
+                        Navigation
+                      </h3>
+                      <nav className="flex flex-col space-y-1">
+                        {/* Public links visible to everyone */}
+                        {publicLinks.map((link) => {
+                          const isActive = pathname === link.href;
+                          return (
+                            <Link
+                              key={link.name}
+                              href={link.href}
+                              className={`flex items-center px-4 py-3.5 text-base font-medium rounded-xl transition-colors ${
+                                isActive
+                                  ? 'bg-indigo-50 text-indigo-600'
+                                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50'
+                              }`}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              <link.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
                               <span>{link.name}</span>
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
-                            </div>
-                          </SheetClose>
-                        </Link>
-                      ))}
-                      
-                      {/* Private links only visible when signed in */}
-                      <SignedIn>
-                        {privateLinks.map((link) => (
-                          <Link
-                            key={link.name}
-                            href={link.href}
-                            className="flex items-center justify-between px-4 py-3.5 text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors"
-                          >
-                            <SheetClose asChild>
-                              <div className="flex items-center justify-between w-full">
+                              {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                            </Link>
+                          );
+                        })}
+                        
+                        {/* Private links only visible when signed in */}
+                        <SignedIn>
+                          {privateLinks.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                              <Link
+                                key={link.name}
+                                href={link.href}
+                                className={`flex items-center px-4 py-3.5 text-base font-medium rounded-xl transition-colors ${
+                                  isActive
+                                    ? 'bg-indigo-50 text-indigo-600'
+                                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/50'
+                                }`}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                <link.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-indigo-600' : 'text-gray-500'}`} />
                                 <span>{link.name}</span>
-                                <ChevronRight className="h-4 w-4 text-gray-400" />
-                              </div>
-                            </SheetClose>
-                          </Link>
-                        ))}
-                      </SignedIn>
-                    </nav>
+                                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />}
+                              </Link>
+                            );
+                          })}
+                        </SignedIn>
+                      </nav>
+                    </div>
 
                     {/* Feature Highlights in Mobile Menu */}
                     <div className="px-6">
-                      <h3 className="text-sm font-semibold text-gray-900 mb-4 px-4">
+                      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-4">
                         Why people love HobbyLink
                       </h3>
                       <div className="space-y-3">
@@ -213,26 +263,29 @@ export const Navbar = () => {
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <NotificationBell />
-                          <UserButton afterSignOutUrl="/" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">Your Account</span>
+                       {/*  <SheetClose asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            Close Menu
+                          </Button>
+                        </SheetClose> */}
                       </div>
                     </SignedIn>
                     
                     <SignedOut>
-                      <Link href="/sign-up" className="w-full">
-                        <SheetClose asChild>
-                          <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-6 h-auto shadow-lg shadow-indigo-200 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-200">
-                            Sign up for free
-                          </Button>
-                        </SheetClose>
+                      <Link href="/sign-up" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-6 h-auto shadow-lg shadow-indigo-200 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-200">
+                          Sign up for free
+                        </Button>
                       </Link>
-                      <Link href="/sign-in" className="w-full">
-                        <SheetClose asChild>
-                          <Button variant="outline" className="w-full rounded-xl py-6 h-auto border-gray-200 hover:bg-gray-50 hover:border-gray-300">
-                            Log in to account
-                          </Button>
-                        </SheetClose>
+                      <Link href="/sign-in" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full rounded-xl py-6 h-auto border-gray-200 hover:bg-gray-50 hover:border-gray-300">
+                          Log in to account
+                        </Button>
                       </Link>
                     </SignedOut>
                   </div>

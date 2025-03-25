@@ -3,6 +3,7 @@ import { Inter} from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Navbar } from "@/components/sections/Navbar";
+import MobileBottomNav from "@/components/sections/MobileBottomNav";
 import FooterSection from "@/components/sections/FooterSection";
 import { Toaster } from "@/components/ui/sonner"
 
@@ -28,11 +29,12 @@ export default function RootLayout({
         className={`${inter.variable} antialiased`}
       >
         <Navbar />
-        <main className="min-h-screen flex flex-col">
+        <main className="min-h-screen flex flex-col pb-16 md:pb-0">
         {children}
 
         </main>
         <FooterSection />
+        {/* <MobileBottomNav /> */}
         <Toaster />
       </body>
     </html>
