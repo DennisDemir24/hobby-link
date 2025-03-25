@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getUnreadActivities, markAllActivitiesAsRead } from "@/lib/actions/activity.action";
 import ActivityItem from "./ActivityItem";
 import { Activity, UnreadActivitiesResult } from "./types";
+import { useAuth } from "@clerk/nextjs";
 
 export default function NotificationBell() {
   const [unreadActivities, setUnreadActivities] = useState<Activity[]>([]);
@@ -19,45 +20,61 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const hasInitialized = useRef(false);
+  const { isLoaded, isSignedIn } = useAuth();
 
   const fetchUnreadActivities = async () => {
+    if (!isLoaded || !isSignedIn) return;
+    
     try {
       const result = await getUnreadActivities() as UnreadActivitiesResult;
       setUnreadActivities(result.activities);
       setUnreadCount(result.totalUnread);
     } catch (error) {
       console.error("Error fetching unread activities:", error);
+      // Reset states on error
+      setUnreadActivities([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!hasInitialized.current) {
+    if (!hasInitialized.current && isLoaded && isSignedIn) {
       fetchUnreadActivities();
       hasInitialized.current = true;
     }
 
     // Set up polling for new notifications (every 30 seconds)
     const intervalId = setInterval(() => {
-      if (!open) { // Only poll when dropdown is closed
+      if (!open && isSignedIn) {
         fetchUnreadActivities();
       }
     }, 30000);
 
     return () => clearInterval(intervalId);
-  }, [open]);
+  }, [open, isLoaded, isSignedIn]);
 
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = async (newOpen: boolean) => {
+    if (!isSignedIn) return;
+    
     setOpen(newOpen);
     
     // When opening the popover, mark all as read
     if (newOpen && unreadCount > 0) {
-      markAllActivitiesAsRead().then(() => {
+      try {
+        await markAllActivitiesAsRead();
         setUnreadCount(0);
-      });
+      } catch (error) {
+        console.error("Error marking activities as read:", error);
+      }
     }
   };
+
+  // Don't render anything if auth is not loaded or user is not signed in
+  if (!isLoaded || !isSignedIn) {
+    return null;
+  }
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>

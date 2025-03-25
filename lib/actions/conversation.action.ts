@@ -202,16 +202,61 @@ export async function getConversations() {
         }
       },
       orderBy: {
-        messages: {
-          _count: 'desc'
-        }
+        updatedAt: 'desc'
       }
     });
 
     return conversations;
   } catch (error) {
-    console.error("Error fetching conversations:", error);
-    throw new Error("Failed to fetch conversations");
+    console.error("Error getting conversations:", error);
+    throw new Error("Failed to get conversations");
+  }
+}
+
+// Get a single conversation with all messages
+export async function getConversationMessages(conversationId: string) {
+  try {
+    const session = await auth();
+    const userId = session?.userId;
+
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    const conversation = await db.conversation.findUnique({
+      where: {
+        id: conversationId,
+        participants: {
+          some: {
+            userId: userId
+          }
+        }
+      },
+      include: {
+        participants: {
+          include: {
+            user: true
+          }
+        },
+        messages: {
+          orderBy: {
+            createdAt: 'asc'
+          },
+          include: {
+            sender: true
+          }
+        }
+      }
+    });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    return conversation;
+  } catch (error) {
+    console.error("Error getting conversation messages:", error);
+    throw new Error("Failed to get conversation messages");
   }
 }
 

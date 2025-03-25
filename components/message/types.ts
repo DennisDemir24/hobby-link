@@ -1,48 +1,29 @@
 export interface User {
   id: string;
-  clerkUserId: string;
-  name: string | null;
-  imageUrl: string | null;
-  email: string;
-}
-
-export interface MessageRead {
-  id: string;
-  userId: string;
-  messageId: string;
-  readAt: Date;
-  user: User;
+  name?: string;
+  imageUrl?: string;
 }
 
 export interface Message {
   id: string;
-  content: string;
-  imageUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  senderId: string;
   conversationId: string;
-  sender: User;
-  readBy: MessageRead[];
+  senderId: string;
+  content: string;
+  createdAt: string;
 }
 
-export interface ConversationParticipant {
-  id: string;
+export interface Participant {
   userId: string;
-  conversationId: string;
-  hasSeenLatest: boolean;
-  createdAt: Date;
   user: User;
+  hasSeenLatest: boolean;
 }
 
 export interface Conversation {
   id: string;
-  name: string | null;
+  name?: string;
   isGroup: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  creatorId: string | null;
-  communityId: string | null;
-  participants: ConversationParticipant[];
+  participants: Participant[];
   messages: Message[];
+  createdAt: string;
+  updatedAt: string;
 } 

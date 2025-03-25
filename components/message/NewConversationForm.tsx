@@ -87,6 +87,7 @@ export function NewConversationForm({ users, communities, currentUserId }: NewCo
           id="group-chat"
           checked={isGroup}
           onCheckedChange={setIsGroup}
+          className="data-[state=checked]:bg-indigo-600 data-[state=checked]:hover:bg-indigo-700 data-[state=unchecked]:bg-gray-200 data-[state=unchecked]:hover:bg-gray-300 [&>span]:data-[state=checked]:bg-white [&>span]:data-[state=unchecked]:bg-indigo-600"
         />
         <Label htmlFor="group-chat">Create a group chat</Label>
       </div>
@@ -121,7 +122,7 @@ export function NewConversationForm({ users, communities, currentUserId }: NewCo
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0">
+          <PopoverContent className="w-[300px] p-0 bg-white">
             <Command shouldFilter={false}>
               <CommandInput placeholder="Search users..." />
               <CommandList>
