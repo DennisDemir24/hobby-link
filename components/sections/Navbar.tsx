@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet'
-import { Menu, X, Users, Heart, Puzzle, Search, Home, MessageSquare, User, Settings } from 'lucide-react'
+import { Menu, X, Users, Heart, Puzzle, Search, Home, MessageSquare, User } from 'lucide-react'
 import { UserButton, SignedIn, SignedOut } from "@clerk/nextjs"
 import NotificationBell from '@/components/activity/NotificationBell'
 

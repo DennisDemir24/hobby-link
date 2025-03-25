@@ -3,7 +3,6 @@ import { Inter} from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Navbar } from "@/components/sections/Navbar";
-import MobileBottomNav from "@/components/sections/MobileBottomNav";
 import FooterSection from "@/components/sections/FooterSection";
 import { Toaster } from "@/components/ui/sonner"
 
